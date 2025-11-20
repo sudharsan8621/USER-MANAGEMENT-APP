@@ -1,6 +1,7 @@
 // API service for handling all HTTP requests to JSONPlaceholder
 
 const API_BASE_URL = 'https://jsonplaceholder.typicode.com'
+// 'https://jsonplaceholder.typicode.com'
 
 // Fetch all users
 export const fetchUsers = async () => {
