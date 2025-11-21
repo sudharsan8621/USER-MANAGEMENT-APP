@@ -6,26 +6,6 @@ function UserList({ users, onDelete, loading }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   
-  // Get initials for avatar
-  const getInitials = (name) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-  
-  // Get color for avatar based on name
-  const getAvatarColor = (name) => {
-    const colors = [
-      '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', 
-      '#f59e0b', '#10b981', '#14b8a6', '#3b82f6'
-    ]
-    const index = name.charCodeAt(0) % colors.length
-    return colors[index]
-  }
-  
   // Handle sorting
   const handleSort = (key) => {
     let direction = 'asc'
@@ -45,8 +25,7 @@ function UserList({ users, onDelete, loading }) {
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.address?.city.toLowerCase().includes(searchTerm.toLowerCase())
+        user.company?.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
     
@@ -57,6 +36,10 @@ function UserList({ users, onDelete, loading }) {
         let bValue = b[sortConfig.key]
         
         // Handle nested properties
+        if (sortConfig.key === 'company') {
+          aValue = a.company?.name || ''
+          bValue = b.company?.name || ''
+        }
         if (sortConfig.key === 'city') {
           aValue = a.address?.city || ''
           bValue = b.address?.city || ''
@@ -98,7 +81,7 @@ function UserList({ users, onDelete, loading }) {
         <div className="search-box">
           <input
             type="text"
-            placeholder="Search users..."
+            placeholder="🔍 Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
@@ -110,11 +93,13 @@ function UserList({ users, onDelete, loading }) {
       </div>
       
       {/* Table Container */}
-      <div className={`table-container ${loading ? 'table-loading' : ''}`}>
+      <div className="table-container">
         <table className="user-table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th onClick={() => handleSort('id')} className="sortable">
+                ID {sortConfig.key === 'id' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
               <th onClick={() => handleSort('name')} className="sortable">
                 Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
@@ -124,8 +109,9 @@ function UserList({ users, onDelete, loading }) {
               <th onClick={() => handleSort('email')} className="sortable">
                 Email {sortConfig.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
-              <th onClick={() => handleSort('phone')} className="sortable">
-                Phone {sortConfig.key === 'phone' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              <th>Phone</th>
+              <th onClick={() => handleSort('company')} className="sortable">
+                Company {sortConfig.key === 'company' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
               <th onClick={() => handleSort('city')} className="sortable">
                 City {sortConfig.key === 'city' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
@@ -137,41 +123,28 @@ function UserList({ users, onDelete, loading }) {
           <tbody>
             {processedUsers.length === 0 ? (
               <tr>
-                <td colSpan="8" className="no-results">
+                <td colSpan="9" className="no-results">
                   No users found matching "{searchTerm}"
                 </td>
               </tr>
             ) : (
-              processedUsers.map((user, index) => (
+              processedUsers.map(user => (
                 <tr key={user.id}>
-                  <td data-label="ID">
-                    <span className="id-badge">{user.id}</span>
-                  </td>
+                  <td data-label="ID">{user.id}</td>
                   <td data-label="Name">
-                    <div className="user-info">
-                      <div 
-                        className="user-avatar"
-                        style={{ background: getAvatarColor(user.name) }}
-                      >
-                        {getInitials(user.name)}
-                      </div>
-                      <div className="user-name">{user.name}</div>
+                    <div className="user-name">
+                      {user.name}
                     </div>
                   </td>
-                  <td data-label="Username">
-                    <span className="username">@{user.username}</span>
-                  </td>
+                  <td data-label="Username">{user.username}</td>
                   <td data-label="Email">
                     <a href={`mailto:${user.email}`} className="email-link">
-                      📧 {user.email}
+                      {user.email}
                     </a>
                   </td>
-                  <td data-label="Phone">
-                    <span className="phone">📱 {user.phone}</span>
-                  </td>
-                  <td data-label="City">
-                    <span className="city">📍 {user.address?.city || 'N/A'}</span>
-                  </td>
+                  <td data-label="Phone">{user.phone}</td>
+                  <td data-label="Company">{user.company?.name || 'N/A'}</td>
+                  <td data-label="City">{user.address?.city || 'N/A'}</td>
                   <td data-label="Website">
                     {user.website ? (
                       <a 
@@ -180,10 +153,10 @@ function UserList({ users, onDelete, loading }) {
                         rel="noopener noreferrer"
                         className="website-link"
                       >
-                        🌐 {user.website}
+                        {user.website}
                       </a>
                     ) : (
-                      <span className="no-website">-</span>
+                      'N/A'
                     )}
                   </td>
                   <td data-label="Actions">
